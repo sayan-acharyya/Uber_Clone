@@ -162,3 +162,146 @@ fetch('http://localhost:5000/users/register', {
 ---
 
 If you want me to also add a high-level `README.md` at the project root or add more endpoints (login, logout, profile) docs, I can do that next.
+
+---
+
+## Login (POST /users/login)
+
+- **Endpoint**: `POST /users/login`
+- **Purpose**: Authenticate an existing user and return a JWT token for authenticated requests.
+
+---
+
+## Request
+
+- **Method**: POST
+- **Headers**:
+  - `Content-Type: application/json`
+
+### Request body (JSON)
+
+```json
+{
+  "email": "user@example.com",
+  "password": "string"
+}
+```
+
+### Field requirements and validation rules
+
+- `email` (String)
+  - Required
+  - Valid email format
+- `password` (String)
+  - Required
+  - Minimum length: 6 characters
+
+> Note: Basic validation is implemented in `Backend/routes/user.route.js` with `express-validator`, and additional checks happen in `user.controller.js`.
+
+---
+
+## Responses
+
+### Success
+- **Status**: `200 OK`
+- **Body (example)**:
+
+```json
+{
+  "token": "<jwt-token>",
+  "user": {
+    "_id": "<mongo-id>",
+    "fullname": { "firstname": "John", "lastname": "Doe" },
+    "email": "john@example.com",
+    "socketId": null
+  }
+}
+```
+
+> Notes:
+> - The `user` object returned excludes `password` (the controller uses `.select('+password')` to verify password and does not return it).
+> - JWT token is created using `user.generateAuthToken()` and typically expires in 24 hours.
+
+### Validation error
+- **Status**: `400 Bad Request`
+- **When**: `express-validator` detects invalid or missing fields.
+
+**Body (example)**:
+```json
+{ "errors": [{ "msg": "Invalid Email", "param": "email", "location": "body" }] }
+```
+
+### Authentication failure
+- **Status**:
+  - `401 Unauthorized` — if the user (email) does not exist (as implemented in `user.controller.js`)
+  - `400 Bad Request` — if password verification fails (as implemented in `user.controller.js`)
+- **When**: Incorrect email or password
+
+**Body (example)**:
+```json
+{ "message": "Invalid Email or Password" }
+```
+
+### Server error
+- **Status**: `500 Internal Server Error`
+- **When**: Unexpected server error
+
+**Body (example)**:
+```json
+{ "error": "Internal server error" }
+```
+
+---
+
+## Example Requests
+
+### cURL
+
+```bash
+curl -X POST http://localhost:5000/users/login \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "john@example.com",
+    "password": "password123"
+  }'
+```
+
+### JavaScript (fetch)
+
+```javascript
+fetch('http://localhost:5000/users/login', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({ email: 'john@example.com', password: 'password123' })
+})
+  .then((res) => res.json())
+  .then((data) => console.log(data))
+  .catch(console.error);
+```
+
+---
+
+## Status Codes Summary (login endpoint)
+
+| Status Code | Description |
+|-------------|-------------|
+| `200` | User authenticated successfully; returns token and user info |
+| `400` | Validation error or bad request |
+| `401` | Invalid credentials — email not found or password mismatch |
+| `500` | Server error |
+
+---
+
+## Implementation notes (login)
+
+- The controller `loginUser` uses `userModel.findOne({ email }).select('+password')` to include password for comparison. The `comparePassword` method compares the provided password against the stored hashed password.
+- On success, `user.generateAuthToken()` returns a JWT.
+
+---
+
+## References (updated)
+- `Backend/models/user.model.js`
+- `Backend/routes/user.route.js`
+- `Backend/services/user.service.js` (user creation logic)
+- `Backend/controllers/user.controller.js` (login + register implementations)
+
