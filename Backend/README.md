@@ -305,3 +305,120 @@ fetch('http://localhost:5000/users/login', {
 - `Backend/services/user.service.js` (user creation logic)
 - `Backend/controllers/user.controller.js` (login + register implementations)
 
+---
+
+## Profile (GET /users/profile)
+
+- **Endpoint**: `GET /users/profile`
+- **Purpose**: Return the authenticated user's profile information.
+- **Auth**: Protected route. Requires a valid JWT token, either as a cookie (`token`) or in the `Authorization` header as `Bearer <token>`.
+
+### Request
+- **Method**: GET
+- **Headers**:
+  - `Authorization: Bearer <jwt-token>` (optional if cookie is used)
+  - `Cookie: token=<jwt-token>` (optional if header is used)
+
+### Responses
+- **Success**: `200 OK` — returns the user object in the response body.
+  - Body (example):
+
+```json
+{
+  "_id": "<mongo-id>",
+  "fullname": { "firstname": "John", "lastname": "Doe" },
+  "email": "john@example.com",
+  "socketId": null
+}
+```
+
+- **Unauthorized**: `401 Unauthorized` — when token is missing, invalid, expired, or blacklisted.
+  - Body (example): `{ "message": "Unauthorized" }`
+
+---
+
+## Logout (GET /users/logout)
+
+- **Endpoint**: `GET /users/logout`
+- **Purpose**: Logs out the authenticated user by clearing the auth cookie and blacklisting the token so it cannot be used again.
+- **Auth**: Protected route. Must be an authenticated user. Token should be in cookie or Authorization header as above.
+
+### Request
+- **Method**: GET
+- **Headers**:
+  - `Authorization: Bearer <jwt-token>` (optional if cookie is used)
+  - `Cookie: token=<jwt-token>` (optional if header is used)
+
+### Behavior
+- Clears the `token` cookie on the client (`res.clearCookie('token')`).
+- Stores the token in the `BlacklistToken` collection (`blacklistTokenModel`) to prevent reuse of a token that has been logged out.
+  - The `BlacklistToken` model has an auto-expire TTL (24 hours) matching the token expiration.
+
+### Responses
+- **Success**: `200 OK` — returns `{ "message": "Logged out" }`.
+- **Unauthorized**: `401 Unauthorized` — when token is missing/invalid/blacklisted.
+
+Example Body (success):
+```json
+{ "message": "Logged out" }
+```
+
+---
+
+## Example Requests (profile & logout)
+
+### Profile (cURL)
+```bash
+curl -X GET http://localhost:5000/users/profile \
+  -H "Authorization: Bearer <jwt-token>"
+```
+
+Or with cookie:
+```bash
+curl -X GET http://localhost:5000/users/profile --cookie "token=<jwt-token>"
+```
+
+### Logout (cURL)
+```bash
+curl -X GET http://localhost:5000/users/logout \
+  -H "Authorization: Bearer <jwt-token>"
+```
+
+Or with cookie:
+```bash
+curl -X GET http://localhost:5000/users/logout --cookie "token=<jwt-token>"
+```
+
+### JavaScript (fetch) — Profile
+```javascript
+fetch('http://localhost:5000/users/profile', {
+  method: 'GET',
+  headers: { 'Authorization': 'Bearer <jwt-token>' }
+})
+  .then(res => res.json())
+  .then(console.log)
+  .catch(console.error);
+```
+
+### JavaScript (fetch) — Logout
+```javascript
+fetch('http://localhost:5000/users/logout', {
+  method: 'GET',
+  headers: { 'Authorization': 'Bearer <jwt-token>' },
+  credentials: 'include'
+})
+  .then(res => res.json())
+  .then(console.log)
+  .catch(console.error);
+```
+
+---
+
+## Implementation notes (profile & logout)
+
+- `auth.middleware.js` reads token from the cookie or the `Authorization` header and returns 401 when token is missing or invalid.
+- The token is checked against the blacklist (blacklist model) before allowing access. If token is blacklisted, the middleware should return 401.
+- `logoutUser` uses `blacklistTokenModel.create({ token })` to persist the token; it also clears the cookie.
+- The `BlacklistToken` entries expire in 24 hours by design (see `models/blacklistToken.model.js`) so tokens are effectively invalidated for the remaining duration when logged out.
+
+
