@@ -307,6 +307,130 @@ fetch('http://localhost:5000/users/login', {
 
 ---
 
+## Captains — Register (POST /captains/register)
+
+- **Endpoint**: `POST /captains/register`
+- **Purpose**: Register a new captain (driver) in the system, storing vehicle details and returning a JWT token.
+- **Router path**: The route is set up in `Backend/routes/captain.route.js` as `router.post('/register', ...)`. Mounting (e.g., `app.use('/captains', captainRoute)`) determines the final path.
+
+### Request
+- **Method**: POST
+- **Headers**:
+  - `Content-Type: application/json`
+
+### Request body (JSON)
+
+```json
+{
+  "fullname": {
+    "firstname": "string",   // required, min length 3
+    "lastname": "string"     // required, min length 3
+  },
+  "email": "string",        // required, valid email
+  "password": "string",     // required, min length 6
+  "vehicle": {
+    "color": "string",      // required, min length 3
+    "plate": "string",      // required, min length 3
+    "capacity": number,       // required, min 1
+    "vehicleType": "car|motorcycle|auto" // required
+  }
+}
+```
+
+### Field requirements and validation rules
+
+- `fullname.firstname` (String): required, minimum 3 characters
+- `fullname.lastname` (String): required, minimum 3 characters
+- `email` (String): required, valid email format, unique in DB
+- `password` (String): required, minimum 6 characters
+- `vehicle.color` (String): required, minimum 3 characters
+- `vehicle.plate` (String): required, minimum 3 characters
+- `vehicle.capacity` (Number): required, integer, minimum 1
+- `vehicle.vehicleType` (String): required, one of `car`, `motorcycle`, `auto`
+
+Validation is implemented using `express-validator` in `Backend/routes/captain.route.js`. Duplicate email checks are performed in the controller/service and via the model's unique index.
+
+---
+
+## Responses
+
+### Success
+- **Status**: `201 Created`
+- **Body (example)**:
+
+```json
+{
+  "token": "<jwt-token>",
+  "captain": {
+    "_id": "<mongo-id>",
+    "fullname": { "firstname": "John", "lastname": "Doe" },
+    "email": "john@example.com",
+    "vehicle": { "color": "red", "plate": "ABC123", "capacity": 4, "vehicleType": "car" },
+    "status": "inactive",
+    "socketId": null
+  }
+}
+```
+
+> Notes: `password` is not returned (the model uses `select: false`). The token is a JWT created by `generateAuthToken` on the captain model.
+
+### Validation error
+- **Status**: `400 Bad Request`
+- **When**: `express-validator` detects invalid/missing fields
+
+### Duplicate email
+- **Status**: `400 Bad Request` (as implemented in controller)
+- **Body (example)**: `{ "message": "Captain already exists" }`
+
+### Server error
+- **Status**: `500 Internal Server Error`
+
+---
+
+## Example Requests
+
+### cURL
+
+```bash
+curl -X POST http://localhost:5000/captains/register \
+  -H "Content-Type: application/json" \
+  -d '{
+    "fullname": { "firstname": "John", "lastname": "Doe" },
+    "email": "john@example.com",
+    "password": "password123",
+    "vehicle": { "color": "red", "plate": "ABC123", "capacity": 4, "vehicleType": "car" }
+  }'
+```
+
+### JavaScript (fetch)
+
+```javascript
+fetch('http://localhost:5000/captains/register', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({
+    fullname: { firstname: 'John', lastname: 'Doe' },
+    email: 'john@example.com',
+    password: 'password123',
+    vehicle: { color: 'red', plate: 'ABC123', capacity: 4, vehicleType: 'car' }
+  })
+})
+  .then((res) => res.json())
+  .then((data) => console.log(data))
+  .catch(console.error);
+```
+
+---
+
+## Implementation notes
+
+- Model: `Backend/models/captain.model.js` defines schema validation (firstname/lastname min length, email match, unique, password select:false, vehicle fields and enums, status default 'inactive').
+- Controller: `Backend/controllers/captain.controller.js` verifies validation, checks for existing email, hashes password using `captainModel.hashPassword`, creates the captain via `captainService.createCaptain`, and returns a JWT token via `captain.generateAuthToken()`.
+- Service: `Backend/services/captain.service.js` enforces required fields and creates the captain document.
+
+
+---
+
 ## Profile (GET /users/profile)
 
 - **Endpoint**: `GET /users/profile`
