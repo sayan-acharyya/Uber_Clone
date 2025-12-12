@@ -431,6 +431,54 @@ fetch('http://localhost:5000/captains/register', {
 
 ---
 
+## Captains — Login (POST /captains/login)
+
+- **Endpoint**: `POST /captains/login`
+- **Purpose**: Authenticate a captain and return a JWT token (also sets `token` cookie).
+
+### Request
+- **Method**: POST
+- **Headers**: `Content-Type: application/json`
+
+### Request body
+```json
+{ "email": "captain@example.com", "password": "string" }
+```
+
+### Responses
+- **Success**: `200 OK` — returns `{ token, captain }` and sets cookie `token`.
+- **Validation error**: `400 Bad Request` — invalid/missing fields.
+- **Authentication failure**: `401 Unauthorized` — invalid credentials.
+
+Example success body:
+```json
+{ "token": "<jwt>", "captain": { "_id": "...", "email": "...", "fullname": {...} } }
+```
+
+---
+
+## Captains — Profile (GET /captains/profile)
+
+- **Endpoint**: `GET /captains/profile`
+- **Purpose**: Return the authenticated captain's profile.
+- **Auth**: Protected by `authCaptain` middleware (cookie or Authorization header).
+
+### Responses
+- **Success**: `200 OK` — returns `{ captain: { ... } }`.
+- **Unauthorized**: `401 Unauthorized` — missing/invalid/blacklisted token.
+
+---
+
+## Captains — Logout (GET /captains/logout)
+
+- **Endpoint**: `GET /captains/logout`
+- **Purpose**: Logs out the captain by blacklisting the token, clearing cookie, and returning a success message.
+
+### Behavior
+- Reads token from cookie or Authorization header, stores it in `BlacklistToken`, clears cookie `token`, and returns `200` with `{ message: "Logout successfully" }`.
+
+---
+
 ## Profile (GET /users/profile)
 
 - **Endpoint**: `GET /users/profile`
