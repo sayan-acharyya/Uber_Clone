@@ -1,5 +1,9 @@
-import React, { useState } from 'react'
+import React, { useContext, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
+import axios from 'axios'
+import toast from 'react-hot-toast'
+import { CaptainDataContext } from '../context/CaptainContext'
+
 
 const CaptainSignup = () => {
 
@@ -13,7 +17,10 @@ const CaptainSignup = () => {
   const [vehicleCapacity, setVehicleCapacity] = useState('')
   const [vehicleType, setVehicleType] = useState('')
 
-  const submitHandler = (e) => {
+  const { captain, setCaptain } = useContext(CaptainDataContext);
+  const navigate = useNavigate();
+
+  const submitHandler = async (e) => {
     e.preventDefault()
 
     const captainData = {
@@ -30,8 +37,15 @@ const CaptainSignup = () => {
         vehicleType: vehicleType
       }
     }
+    const response = await axios.post("http://localhost:4000/captains/register", captainData);
 
-    console.log("Captain Form Data:", captainData)
+    if (response.status === 201) {
+      const data = response.data;
+      setCaptain(data.captain);
+      localStorage.setItem('token', data.token);
+      toast.success("Registration successful. You can now log in.")
+      navigate('/captain-login');
+    }
 
     // reset fields
     setEmail('')
@@ -43,7 +57,7 @@ const CaptainSignup = () => {
     setVehicleCapacity('')
     setVehicleType('')
   }
-  const navigate = useNavigate();
+
 
   return (
     <div className='py-5 px-5 h-screen flex flex-col justify-between'>

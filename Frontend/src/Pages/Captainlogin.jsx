@@ -1,25 +1,38 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import axios from "axios";
+import toast from "react-hot-toast";
+import { CaptainDataContext } from '../context/CaptainContext'
+import { useContext } from "react";
 
 const CaptainLogin = () => {
 
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
+    const navigate = useNavigate();
 
-    const [captainData, setCaptainData] = useState({})
+    const { captain, setCaptain } = useContext(CaptainDataContext);
 
-    const handleLogin = (e) => {
+
+    const handleLogin = async(e) => {
         e.preventDefault();
-        setCaptainData({
+        const captainData = {
             email: email,
-            password: password
-        });
-        console.log(captainData);
+            password
+        }
+        const response = await axios.post("http://localhost:4000/captains/login",captainData);
 
+        if(response.status === 200){
+            const data = response.data;
+            setCaptain(data.captain);
+            localStorage.setItem("token",data.token);
+            toast.success("Login successful")
+            navigate("/captain-home");
+        }
         setEmail("");
         setPassword("");
     }
- const navigate = useNavigate();
+
     return (
         <div className="p-7 h-screen flex flex-col justify-between">
             <div>
