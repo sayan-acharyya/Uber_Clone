@@ -1,7 +1,7 @@
 import React from 'react'
 import { ArrowRight } from 'lucide-react'
 import { Link } from 'react-router-dom'
-
+import  uber_logo  from "../assets/uber_logo.png"
 const Start = () => {
   return (
     <div>
@@ -12,7 +12,7 @@ const Start = () => {
         {/* Logo */}
         <img
           className='w-20 ml-6 drop-shadow-lg'
-          src="https://upload.wikimedia.org/wikipedia/commons/c/cc/Uber_logo_2018.png"
+          src={uber_logo}
           alt="Uber Logo"
         />
 
