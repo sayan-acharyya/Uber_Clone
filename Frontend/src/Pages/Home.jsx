@@ -3,12 +3,15 @@ import React, { useRef, useState } from 'react'
 import { useGSAP } from '@gsap/react'
 import gsap from 'gsap'
 import LocationSearchPanel from '../components/LocationSearchPanel'
-import { User } from 'lucide-react'
+import { LogOut, Power, User } from 'lucide-react'
 import { ChevronDown } from 'lucide-react';
 import { VehiclePanel } from '../components/VehiclePanel.jsx'
 import ConfirmedRide from '../components/ConfirmedRide.jsx'
 import LookingForDriver from '../components/LookingForDriver.jsx'
 import WaitingForDriver from '../components/WaitingForDriver.jsx'
+import { Link, useNavigate } from 'react-router-dom'
+import axios from 'axios'
+import toast from 'react-hot-toast'
 
 const Home = () => {
   const [pickup, setPickup] = useState('')
@@ -27,7 +30,7 @@ const Home = () => {
   const vehicleFoundRef = useRef(null)
   const waitingForDriverRef = useRef(null)
 
-  
+
   /* GSAP animations (unchanged) */
   useGSAP(() => {
     gsap.to(panelCloseRef.current, {
@@ -77,6 +80,25 @@ const Home = () => {
     }
   }, [waitingForDriver])
 
+  const navigate = useNavigate();
+
+  const logout = () => {
+    const token = localStorage.getItem('token')
+
+
+    axios.get("http://localhost:4000/users/logout", {
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    }).then((response) => {
+      if (response.status === 200) {
+        toast.success("Logout Successfully");
+        localStorage.removeItem('token')
+        navigate('/login')
+      }
+    })
+
+  }
   return (
     <div className="h-screen relative overflow-hidden">
 
@@ -86,6 +108,25 @@ const Home = () => {
         src="https://upload.wikimedia.org/wikipedia/commons/c/cc/Uber_logo_2018.png"
         alt="logo"
       />
+
+      <button
+        onClick={logout}
+        className="
+    absolute right-5 top-5 z-20
+    w-11 h-11
+    flex items-center justify-center
+    rounded-full
+    bg-white/90 backdrop-blur
+    border border-gray-200
+    shadow-sm
+    hover:bg-gray-50
+    transition-all
+  "
+        title="Logout"
+      >
+        <LogOut className="w-5 h-5 text-gray-700" />
+      </button>
+
 
       {/* Map */}
       <img
