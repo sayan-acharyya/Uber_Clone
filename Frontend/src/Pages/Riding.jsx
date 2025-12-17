@@ -1,5 +1,5 @@
 import React from 'react'
-import { House } from 'lucide-react';
+import { House, IndianRupee, MapPin } from 'lucide-react';
 import { Link } from 'react-router-dom';
 const Riding = () => {
     return (
@@ -32,16 +32,16 @@ const Riding = () => {
                     <div className='w-full mt-5'>
 
                         <div className='flex items-center gap-5 p-3 border-b-2'>
-                            <i className="text-lg ri-map-pin-2-fill"></i>
+                            <MapPin />
                             <div>
                                 <h3 className='text-lg font-medium'>562/11-A</h3>
                                 <p className='text-sm -mt-1 text-gray-600'>City Center, Durgapur</p>
                             </div>
                         </div>
                         <div className='flex items-center gap-5 p-3'>
-                            <i className="ri-currency-line"></i>
+                            <IndianRupee />
                             <div>
-                                <h3 className='text-lg font-medium'>₹231 </h3>
+                                <h3 className='text-lg font-medium'>231 </h3>
                                 <p className='text-sm -mt-1 text-gray-600'>Cash Payment</p>
                             </div>
                         </div>

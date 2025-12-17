@@ -29,6 +29,7 @@ const CaptainLogin = () => {
             toast.success("Login successful")
             navigate("/captain-home");
         }
+         
         setEmail("");
         setPassword("");
     }
