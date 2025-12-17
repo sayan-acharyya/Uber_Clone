@@ -58,7 +58,7 @@ const CaptainRiding = () => {
                     alt=""
                 />
 
-                {/* Logout Button */}
+                {/* Logout Buttonn */}
                 <button
                     onClick={logout}
                     className="absolute right-5 top-5 z-20 w-10 h-10 flex items-center justify-center rounded-full bg-white shadow"
